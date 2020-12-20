@@ -201,8 +201,3 @@ final class F1 extends BaseMath
 
 $f1 = new F1(111, 21, 31);
 echo $f1->getValue();
-
-function convertString($a, $b)
-{
-
-}
