@@ -1,16 +1,15 @@
 <?php
 namespace Test3;
 
-ini_set("memory_limit", "1000M");
+use Exception;
 
 class newBase
 {
     private static $count = 0;
     private static $arSetName = [];
-    /**
-     * @param string $name
+    /*@param string $name
      */
-    public function __construct($name = 0)
+    public function __construct(int $name = 0)
     {
         if (empty($name)) {
             while (array_search(self::$count, self::$arSetName) != false) {
@@ -21,7 +20,7 @@ class newBase
         $this->name = $name;
         self::$arSetName[] = $this->name;
     }
-    private $name;
+    protected $name;
     /**
      * @return string
      */
@@ -40,12 +39,14 @@ class newBase
     /**
      * @return string
      */
-    public function getSize()
+    public function getSize(): string//Missing function's return type declaration
+
     {
         $size = strlen(serialize($this->value));
         return strlen($size) + $size;
     }
-    public function __sleep()
+    public function __sleep(): array//Missing function's return type declaration
+
     {
         return ['value'];
     }
@@ -54,13 +55,17 @@ class newBase
      */
     public function getSave(): string
     {
-        $value = serialize($value);
+        $value = [];
+        $value = str_split(serialize($value)); // преобразовали строку в массив
         return $this->name . ':' . sizeof($value) . ':' . $value;
     }
+
     /**
-     * @return newBase
+     * @param string $value
+     * @return void
      */
-    public static function load(string $value): newBase
+    public static function load(string $value): newBase// return type
+
     {
         $arValue = explode(':', $value);
         return (new newBase($arValue[0]))
@@ -82,7 +87,8 @@ class newView extends newBase
         $this->setType();
         $this->setSize();
     }
-    public function setProperty($value)
+    public function setProperty($value): newView//Missing function's return type declaration
+
     {
         $this->property = $value;
         return $this;
@@ -94,7 +100,9 @@ class newView extends newBase
     private function setSize()
     {
         if (is_subclass_of($this->value, "Test3\newView")) {
-            $this->size = parent::getSize() + 1 + strlen($this->property);
+            $n = strlen($this->property); //привели к строке
+            $m = (string) $n;
+            $this->size = (parent::getSize() . "1") . $m;
         } elseif ($this->type == 'test') {
             $this->size = parent::getSize();
         } else {
@@ -102,19 +110,21 @@ class newView extends newBase
         }
     }
     /**
-     * @return string
+     * @return string[]
      */
-    public function __sleep()
+    public function __sleep(): array
     {
-        return ['property'];
+        return ['property']; //возвращаемое значение массив
     }
+
     /**
      * @return string
+     * @throws Exception
      */
     public function getName(): string
     {
-        if (empty($this->name)) {
-            throw new Exception('The object doesn\'t have name');
+        if (empty($this->name)) { //name protected
+            throw new Exception("The object does\'t have name"); //не найден класс, нужно импортировать
         }
         return '"' . $this->name . '": ';
     }
@@ -153,7 +163,9 @@ class newView extends newBase
         }
         return parent::getSave() . serialize($this->property);
     }
+
     /**
+     * @param string $value
      * @return newView
      */
     public static function load(string $value): newBase
@@ -162,20 +174,17 @@ class newView extends newBase
         return (new newBase($arValue[0]))
             ->setValue(unserialize(substr($value, strlen($arValue[0]) + 1
                  + strlen($arValue[1]) + 1), $arValue[1]))
-            ->setProperty(unserialize(substr($value, strlen($arValue[0]) + 1
+            ->setProperty(unserialize(substr($value, strlen($arValue[0]) + 1// setProperty Не найден, нужно его импортировать
                  + strlen($arValue[1]) + 1 + $arValue[1])))
         ;
     }
 }
-//Эта ошибка означает, что  скрипт PHP  для выполнения
-//требует памяти больше, чем разрешено в настройках PHP
-
 function gettype($value): string
 {
     if (is_object($value)) {
         $type = get_class($value);
         do {
-            if (strpos($type, "Test3\ newBase") !== false) {
+            if (strpos($type, "Test3\newBase") !== false) {
                 return 'test';
             }
         } while ($type = get_parent_class($type));
@@ -183,12 +192,10 @@ function gettype($value): string
     return gettype($value);
 }
 
-$obj = new newBase('12345'); // создаем экземпляр класса newBase
+$obj = new newBase('12345');
 $obj->setValue('text');
 
-$obj2 = new \Test3\newView('O9876'); /* ошибка Uncaught TypeError:
-Аргумент 1 передан в Тест 3\new Base::__construct() должен иметь тип
-int, а передана строка */
+$obj2 = new newView('O9876');
 $obj2->setValue($obj);
 $obj2->setProperty('field');
 $obj2->getInfo();
